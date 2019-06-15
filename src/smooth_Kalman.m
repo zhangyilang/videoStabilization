@@ -16,13 +16,13 @@ function [M_smooth] = smooth_Kalman(M_cummulative)
 %   M_smooth: cell of smoothed matrices.
 
 FrameLen = length(M_cummulative) + 1;
-trans_noise = [1e-2, 1e-2, 1e-2, 1e-2];
+trans_noise = [1e-2, 1e-2, 1e-2, 1e-2];     % variance
 observe_noise = [1e-4, 1e-4, 1e-4, 1e-4];
 
 % transition matrix F and observation matrix H and their cov matrices
 F = eye(4);
 H = eye(4);
-sigma_X = diag(trans_noise);
+sigma_X = diag(trans_noise);        % suppose independent
 sigma_Z = diag(observe_noise);
 
 % initialization
