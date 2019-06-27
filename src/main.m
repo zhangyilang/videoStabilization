@@ -7,7 +7,7 @@ close all
 
 %% Read data
 % 生成 VideoReader 实例来读入视频，转为元胞（元胞的每个元素是一帧）
-v = VideoReader('../data/01_input.avi');
+v = VideoReader('../data/03_input.avi');
 video = {};
 while hasFrame(v)
     video = [video, readFrame(v)];

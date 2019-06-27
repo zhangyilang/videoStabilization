@@ -15,7 +15,7 @@ function [M_cummulative] = motionEstimator(feature_i,feature_p)
 %                   0    ,   0    , 1 ]
 M_cummulative = cell(length(feature_i),1);
 for featureNumber = 1 : length(feature_i)
-    [M_cummulative{featureNumber}, ~] = estimateRigidTransformation(feature_i{featureNumber}.Location, feature_p{featureNumber}.Location, 100, 0.1);
+    [M_cummulative{featureNumber}, ~] = estimateRigidTransformation(feature_i{featureNumber}.Location, feature_p{featureNumber}.Location, 100, 0.2);
 end
 end
 

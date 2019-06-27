@@ -24,8 +24,8 @@ feature_p = cell(frameTotal - 1, 1);
 for frameIndex = 1 : frameTotal - 1
     frame1 = frames{frameIndex};
     frame2 = frames{frameIndex + 1};
-    points1 = detectHarrisFeatures(frame1);
-    points2 = detectHarrisFeatures(frame2);
+    points1 = cornerDetector('Shi_Tomasi',frame1);
+    points2 = cornerDetector('Shi_Tomasi',frame2);
 
     [features1,valid_points1] = extractFeatures(frame1, points1);
     [features2,valid_points2] = extractFeatures(frame2, points2);
