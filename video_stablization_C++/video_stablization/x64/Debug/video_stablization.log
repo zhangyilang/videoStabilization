@@ -1,0 +1,35 @@
+﻿libcpmtd.lib(xmbtowc.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(StlCompareStringA.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(StlLCMapStringA.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(locale.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(wlocale.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(xlocale.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+videostab.obj : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+video_stablization.obj : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(stdthrow.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(syserror.obj) : error LNK2001: 无法解析的外部符号 _CrtDbgReportW
+libcpmtd.lib(xlocale.obj) : error LNK2001: 无法解析的外部符号 _calloc_dbg
+video_stablization.obj : error LNK2001: 无法解析的外部符号 _calloc_dbg
+libcpmtd.lib(_tolower.obj) : error LNK2001: 无法解析的外部符号 _calloc_dbg
+libcpmtd.lib(locale.obj) : error LNK2001: 无法解析的外部符号 _calloc_dbg
+libcpmtd.lib(wlocale.obj) : error LNK2001: 无法解析的外部符号 _calloc_dbg
+libcpmtd.lib(wlocale.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(xlocale.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(xwcsxfrm.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(StlCompareStringA.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+video_stablization.obj : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(locale0.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(StlLCMapStringA.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(locale.obj) : error LNK2001: 无法解析的外部符号 _free_dbg
+libcpmtd.lib(wlocale.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(xlocale.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(xwcsxfrm.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(StlCompareStringA.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+video_stablization.obj : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(locale0.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(StlLCMapStringA.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(locale.obj) : error LNK2001: 无法解析的外部符号 _malloc_dbg
+libcpmtd.lib(_tolower.obj) : error LNK2019: 无法解析的外部符号 _wcsdup_dbg，该符号在函数 _Getctype 中被引用
+libcpmtd.lib(xstrcoll.obj) : error LNK2001: 无法解析的外部符号 _wcsdup_dbg
+libcpmtd.lib(locale.obj) : error LNK2019: 无法解析的外部符号 _realloc_dbg，该符号在函数 "private: static void __cdecl std::locale::_Locimp::_Locimp_Addfac(class std::locale::_Locimp *,class std::locale::facet *,unsigned __int64)" (?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z) 中被引用
+D:\Real-Time-Video-Stabilization-master\video_stablization\x64\Debug\video_stablization.exe : fatal error LNK1120: 6 个无法解析的外部命令
