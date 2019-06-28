@@ -43,7 +43,7 @@ y_test_smooth = fft(y_test_smooth);
 y_test_smooth(10:end) = 0;
 y_test_smooth = real(ifft(y_test_smooth));
 
-figure(1)
+figure(2)
 hold on
 plot(1:99, y_noise, 'r')
 plot(1:99, y_test, 'b')
