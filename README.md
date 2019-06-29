@@ -30,7 +30,7 @@ github: https://github.com/zhangyilang/videoStabilization (please download chrom
 
 - 特征提取：提取出每一帧中的特征，为运动估计作准备；
 
-  <img src='images/procedure_1.png' style='zoom: 80%'>
+  <img src='images/procedure_1.png' style='zoom: 60%'>
 
 - 运动估计：根据提取到的特征的移动估计出每相邻两帧之间的运动矩阵，包括缩放因子$S$、旋转因子$\theta$和平移向量$(T_x,T_y)$；
 
@@ -205,7 +205,7 @@ $$
 
 ##### 模型建立与算法选取
 
-<img src='images/HMM.png' style='zoom: 60%'>
+<img src='images/HMM.png' style='zoom: 50%'>
 
 抖动参数（包括缩放、平移和旋转）的变化被建模为一个一阶隐马尔可夫过程，转移概率$P(X_{t+1}\mid X_t)$被建模为线性高斯变化过程；由**概述**中的分析知：观察的过程，即发射概率$P(e_t\mid X_t)$也被建模为一个高斯过程。
 
@@ -265,7 +265,7 @@ $$
 
 《Artificial Intelligence: A Modern Approach》中给出的算法伪代码如下
 
-<img src='images/algorithm_particle.png'>
+<img src='images/algorithm_particle.png' style='zoom: 50%'>
 
 
 
@@ -275,7 +275,7 @@ $$
 
 《Artificial Intelligence: A Modern Approach》中给出的算法伪代码如下（矩阵形式推导见书）
 
-<img src='images/algorithm_fixedlag.png'>
+<img src='images/algorithm_fixedlag.png' style='zoom: 50%'>
 
 
 
@@ -290,7 +290,7 @@ trans_noise = [1e-4, 1e-4, 1e-4, 1e-4];     % variance
 observe_noise = [1e-1, 1e-1, 1e-1, 1e-1];
 ```
 
-<img src='images/result_3.png' style='zoom: 80%'>
+<img src='images/result_3.png' style='zoom: 60%'>
 
 粒子滤波用*Matlab*实现的卡尔曼滤波器仿真结果如下（见函数`smooth_particle.m`）：
 
@@ -303,7 +303,7 @@ observe_std = sqrt([1e-1, 1e-1, 1e-1, 1e-1]);
 
 *并将粒子数设置为2000（粒子数为5000时效果和卡尔曼滤波差不多，但速度较慢）。*
 
-<img src='images/result_4.png' style='zoom: 80%'>
+<img src='images/result_4.png' style='zoom: 60%'>
 
 期末时间太紧，滤波算法3来不及写了，就先咕了。
 
