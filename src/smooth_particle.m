@@ -12,8 +12,8 @@ function [M_smooth] = smooth_particle(M_cummulative, N)
 %   M_smooth: cell of smoothed matrices.
 
 FrameLen = length(M_cummulative) + 1;
-trans_std = sqrt([1e-3, 1e-3, 1e-3, 1e-3]);   % variance -> standard deviation
-observe_std = sqrt([1e-4, 1e-4, 1e-4, 1e-4]);
+trans_std = sqrt([1e-4, 1e-4, 1e-4, 1e-4]);   % variance -> standard deviation
+observe_std = sqrt([1e-1, 1e-1, 1e-1, 1e-1]);
 
 % transition matrix F and observation matrix H
 F = eye(4);

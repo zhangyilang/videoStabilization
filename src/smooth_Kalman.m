@@ -16,8 +16,8 @@ function [M_smooth] = smooth_Kalman(M_cummulative)
 %   M_smooth: cell of smoothed matrices.
 
 FrameLen = length(M_cummulative) + 1;
-trans_noise = [1e-2, 1e-2, 1e-2, 1e-2];     % variance
-observe_noise = [1e-4, 1e-4, 1e-4, 1e-4];
+trans_noise = [1e-4, 1e-4, 1e-4, 1e-4];     % variance
+observe_noise = [1e-1, 1e-1, 1e-1, 1e-1];
 
 % transition matrix F and observation matrix H and their cov matrices
 F = eye(4);
@@ -47,7 +47,7 @@ for i = 1:FrameLen-1
     
     % correction based on observation
     Kg = Pi * H' * (H * Pi * H' + sigma_Z)^-1;  % Kalman gain
-    xi = xi_pred + Kg * (Zi - H * xi_pred);
+    xi = xi_pred + Kg * (Zi' - H * xi_pred);
     Pi = (eye(4) - Kg * H) * Pi_pred;
     
     % compute M_smooth

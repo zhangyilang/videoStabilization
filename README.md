@@ -6,7 +6,7 @@ This is the final project of FDU CS:APP.
 
 Group members: 陈幸豪, 王鹏, 王鑫, 叶涵诚, 张奕朗.
 
-github: https://github.com/zhangyilang/videoStabilization
+github: https://github.com/zhangyilang/videoStabilization (please download chrome plugin `GitHub with MathJax` to show all the equations)
 
 
 
@@ -38,8 +38,6 @@ github: https://github.com/zhangyilang/videoStabilization
 
   例如：拍摄者的位置或者视角一直在向左或者向前持续移动，并且在不断抖动，会造成每两帧之间的运动在一个固定偏移量的基础上发生随机抖动；
 
-  <iframe width="560" height="315" src="data/02_input.avi" frameborder="0" allowfullscreen></iframe>
-
 - 参数滤波：在加性高斯白噪声的建模假设下，利用滤波消除特征提取和运动估计中的噪声；
 
 - 运动补偿：利用滤波后的参数对每一帧图像进行平移，还原出无抖动或抖动明显减小的视频。
@@ -48,9 +46,7 @@ github: https://github.com/zhangyilang/videoStabilization
 
 ### 特征提取：角点检测
 
-##### 基本原理
-
-###### Harris角点
+##### Harris角点
 
 Harris角点检测算法的思想是让一个小窗在图像中移动，通过考察这个小窗口内图像灰度的平均变换值来确定角点：
 
@@ -90,7 +86,7 @@ $k$为经验常数$0.04~0.06$。当$R>threshold$时且为局部极大值的点�
 
 
 
-###### Shi-Tomasi角点
+##### Shi-Tomasi角点
 
 Shi-Tomasi算法是Harris算法的改进，在Harris算法中，是根据协方差矩阵M的两个特征值的组合来判断是否角点。而在Shi-Tomasi算法中，是根据较小的特征值是否大于阈值来判断是否角点。 
 
@@ -197,7 +193,148 @@ $$
 
    
 
- 
+###  运动估计
+
+
+
+### 参数滤波
+
+由于特征提取和参数估计得到的结果不够准确，存在一定的噪声，需要进行一定的修正。假设特征提取和参数估计无偏，根据大数定理，每一帧估计噪声的累加影响可建模为零均值的加性高斯白噪声。由此，结合HMM模型，可将由隐状态获得观测值的过程建模为一个线性高斯过程。
+
+
+
+##### 模型建立与算法选取
+
+<img src='images/HMM.png' style='zoom: 60%'>
+
+抖动参数（包括缩放、平移和旋转）的变化被建模为一个一阶隐马尔可夫过程，转移概率$P(X_{t+1}\mid X_t)$被建模为线性高斯变化过程；由**概述**中的分析知：观察的过程，即发射概率$P(e_t\mid X_t)$也被建模为一个高斯过程。
+
+HMM有五大算法：
+
+- 预测：转移模型
+
+- 滤波：前向算法  
+- 平滑：前向——后向算法
+- 最可能序列：维特比算法
+- 学习：EM算法
+
+我们要解决的是后验概率$P(X\mid e)$的求取问题，所以可供选择的只有前向算法、前向——后向算法和维特比算法。其中，前向算法求取$P(X_t\mid e_{1:t})$适用于实时的流式数据处理，而前向——后向算法求取$P(X_k\mid e_{1:t})$和维特比算法$argmax_{X_{1:t}}P(X_{1:t}\mid e_{1:t})$适用于静态视频的后处理，实时性不够。由于项目对于实时性的要求，我们这里只能选择前向算法求解。
+
+
+
+##### 滤波算法1：卡尔曼滤波
+
+由于前面对于高斯分布的假设，转移概率和发射概率都被建模为一个线性高斯分布，有如下定理：
+
+- 定理1：若当前分布$P(X_t|e_{1:t})$为高斯分布，转移模型为线性高斯分布$P(X_{t+1}\mid X_t)\sim \mathbb{N}(Fx_t,\Sigma_t)(x_{t+1})$，则单步预测
+
+$$
+P(X_{t+1}\mid e_{1:t})=\int_{x_t}P(X_t|e_{1:t})P(X_{t+1}\mid X_t)dx_t
+$$
+
+​		为高斯分布。
+
+- 定理3：若预测分布$P(X_{t+1}\mid e_{1:t})$为高斯分布，传感器模型为线性高斯分布$P(e_{t+1}\mid X_{t+1})\sim \mathbb{N}(Hx_t,\Sigma_e)(e_t)$，则前向滤波更新后的分布
+
+$$
+P(X_{t+1}\mid e_{1:t+1})=\alpha P(X_{t+1}\mid e_{1:t})P(e_{t+1}\mid X_{t+1})
+$$
+
+​		为高斯分布。
+
+由于高斯分布可以由均值和协方差矩阵唯一确定，所以只需要知道每个时刻隐状态的均值和协方差矩阵更新公式就可以了。由定理中的两式结合高斯假设可以推导出如下更新公式：
+$$
+\begin{align}
+\mu_{t+1}&=F\mu_t+K(e_{t+1}-HF\mu_t)\\
+\Sigma_{t+1}&=(I-K_{t+1}H)(F\Sigma_tF^H+\Sigma_x)\\
+K_{t+1}&=(F\Sigma_tF^H)H^H(H(F\Sigma_tF^H)H^H+\Sigma_x)^{-1}
+\end{align}
+$$
+其中$K_t$为卡尔曼增益矩阵。
+
+
+
+##### 滤波算法2：粒子滤波
+
+卡尔曼滤波虽然精确，但是由于更新公式复杂度太高，在计算资源有限的情况下（如手机）速度会跟不上，所以这里再写一个粒子滤波备用。粒子滤波拥有常数时间复杂度为$O(N)$，其中$N$为粒子的数量。其思想如下：
+
+- 每个粒子代表一个隐状态，用粒子的分布来模拟前向算法中隐状态分布的变化，并根据观察到的证据动态地调整粒子的分布，其主要步骤为转移transition（或称为传播propagation）、重加权reweight、重采样resample；
+- Transition：每个粒子按照隐状态的转移概率模型$P(X_{t+1}\mid x_t)$进行转移；
+- Reweight：根据新观察到的变量$e_{t+1}$为每个粒子重新分配权重$P(e_{t+1}\mid X_{t+1})$
+- Resample：根据每个粒子的权重对其重新进行采样，生成权重为1的新的$N$个粒子作为下一时刻隐状态的估计。
+
+《Artificial Intelligence: A Modern Approach》中给出的算法伪代码如下
+
+<img src='images/algorithm_particle.png'>
+
+
+
+##### 滤波算法3：固定帧延时下的平滑
+
+传统的前向——后向算法需要等待帧序列采集完成，适用于静态数据处理，但是当固定$n=k-t$，$n$为延迟的帧数（较小，约$3\sim5$）时，可以兼顾准确性与实时性。
+
+《Artificial Intelligence: A Modern Approach》中给出的算法伪代码如下（矩阵形式推导见书）
+
+<img src='images/algorithm_fixedlag.png'>
+
+
+
+##### 算法实现与仿真
+
+用*Matlab*实现的卡尔曼滤波器用*Matlab*实现的卡尔曼滤波器仿真结果如下（见函数`smooth_Kalman.m`）：
+
+*注：要复现的话请将函数中的参数调整为*
+
+```matlab
+trans_noise = [1e-4, 1e-4, 1e-4, 1e-4];     % variance
+observe_noise = [1e-1, 1e-1, 1e-1, 1e-1];
+```
+
+<img src='images/result_3.png' style='zoom: 80%'>
+
+粒子滤波用*Matlab*实现的卡尔曼滤波器仿真结果如下（见函数`smooth_particle.m`）：
+
+*注：要复现的话请将函数中的参数调整为*
+
+```matlab
+trans_std = sqrt([1e-4, 1e-4, 1e-4, 1e-4]);   % variance -> standard deviation
+observe_std = sqrt([1e-1, 1e-1, 1e-1, 1e-1]);
+```
+
+*并将粒子数设置为2000（粒子数为5000时效果和卡尔曼滤波差不多，但速度较慢）。*
+
+<img src='images/result_4.png' style='zoom: 80%'>
+
+期末时间太紧，滤波算法3来不及写了，就先咕了。
+
+
+
+### 运动补偿
+
+
+
+### 代码优化
+
+这里给出可能的代码优化思路，有空可能会填坑。
+
+
+
+##### SIMD
+
+single instruction multiple data单指令多数据流。
+
+- C++：可通过调用IPP、MKL等库，充分向量化数据以获得较高的并行度；
+
+- Matlab中只要调用gpuArray就会动用SIMD进行计算。
+
+  
+
+##### GPU并行
+
+由于处理的视频流每帧之间存在前后依赖性，无法并行运算（当然如果你要循环展开那当我没说），但是每帧之内的处理没有依赖性。SIMD为指令级抽象，抽象层级较高，并行粒度较粗，不能充分利用GPU多ALU的特点达到极限的并行度。
+
+- C++：CUDA编程，GPU grid内使用multi-block+multi-thread，block和thread的数量可分别设置为输入矩阵的行数和列数，将二维坐标`(x,y)`映射到`(blockIdx.x, threadIdx.x)`，当然访问数组的时候还是要用`blockIdx.x * blockDim.x + threadIdx.x`进行索引。
+- Matlab：gpuArray + parfor (matlab parallel computing toolbox)
 
 
 
