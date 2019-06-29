@@ -1,4 +1,4 @@
-function [M_cummulative] = motionEstimator(feature_i,feature_p)
+function [M_motion] = motionEstimator(feature_i,feature_p)
 %UNTITLED: estimate the cummulative motion between each pair of two 
 %          adjacent frames.
 %          Remember that your task is to estimate the shake in the video,
@@ -8,14 +8,17 @@ function [M_cummulative] = motionEstimator(feature_i,feature_p)
 %   feature: a cell whose every element is a feature vector of
 %   corresponding frame.
 % Output:
-%   M_cummulative: a cell containing the cummulative motion of each frame,
+%   M_motion: a cell containing the motion of each frame,
 %   the i-th of which is the product of affine transform M_1, ..., M_i.
 %   where M_i = [ S*cos¦È,-S*sin¦È,Tx;  
 %                 S*sin¦È, S*cos¦È,Ty;
 %                   0    ,   0    , 1 ]
-M_cummulative = cell(length(feature_i),1);
+M_motion = cell(length(feature_i),1);
 for featureNumber = 1 : length(feature_i)
-    [M_cummulative{featureNumber}, ~] = estimateRigidTransformation(feature_i{featureNumber}.Location, feature_p{featureNumber}.Location, 100, 0.2);
-end
+    [M_motion{featureNumber}, ~] = estimateRigidTransformation(feature_i{featureNumber}.Location, feature_p{featureNumber}.Location, 1000, 0.2);
 end
 
+% for i = 2 : length(M_cummulative)
+%     M_cummulative{i} = M_cummulative{i - 1} * M_cummulative{i};
+% end
+end
