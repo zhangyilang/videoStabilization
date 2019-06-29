@@ -260,7 +260,7 @@ $$
 
 - 每个粒子代表一个隐状态，用粒子的分布来模拟前向算法中隐状态分布的变化，并根据观察到的证据动态地调整粒子的分布，其主要步骤为转移transition（或称为传播propagation）、重加权reweight、重采样resample；
 - Transition：每个粒子按照隐状态的转移概率模型$P(X_{t+1}\mid x_t)$进行转移；
-- Reweight：根据新观察到的变量$e_{t+1}$为每个粒子重新分配权重$P(e_{t+1}\mid X_{t+1})$
+- Reweight：根据新观察到的变量$e_{t+1}$为每个粒子重新分配权重$P(e_{t+1}\mid X_{t+1})$；
 - Resample：根据每个粒子的权重对其重新进行采样，生成权重为1的新的$N$个粒子作为下一时刻隐状态的估计。
 
 《Artificial Intelligence: A Modern Approach》中给出的算法伪代码如下
