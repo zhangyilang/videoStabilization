@@ -1,4 +1,4 @@
-function [M_smooth] = smooth_Kalman(M_cummulative)
+function [M_smooth] = smooth_Kalman(M_motion)
 %SMOOTH : smooth the motion estimate with Kalman filter.
 %         i.e. Compute P(Xn|Z1:n)
 %   X0 -> X1 -> X2 -> ... -> Xn
@@ -7,16 +7,15 @@ function [M_smooth] = smooth_Kalman(M_cummulative)
 %         Z1    Z2           Zn
 % where Xi = [S, ¦È, Tx, Ty]
 % Input: 
-%   M_i: the estimated transition matrix between two adjacent frames.
+%   M_motion: the estimated transition matrix between two adjacent frames.
 %         [ S*cos¦È,-S*sin¦È,Tx;  
 %           S*sin¦È, S*cos¦È,Ty;
 %             0    ,   0    , 1 ]
-%   M_cummulative: cummulative motion estimation matrix.
 % Output: 
 %   M_smooth: cell of smoothed matrices.
 
-FrameLen = length(M_cummulative) + 1;
-trans_noise = [1e-4, 1e-4, 1e-4, 1e-4];     % variance
+FrameLen = length(M_motion) + 1;
+trans_noise = [1e-2, 1e-2, 1e-2, 1e-2];     % variance
 observe_noise = [1e-1, 1e-1, 1e-1, 1e-1];
 
 % transition matrix F and observation matrix H and their cov matrices
@@ -26,7 +25,7 @@ sigma_X = diag(trans_noise);        % suppose independent
 sigma_Z = diag(observe_noise);
 
 % initialization
-M_smooth = cell(1, FrameLen);
+M_smooth = cell(FrameLen, 1);
 M_smooth{1} = eye(3);
 xi = [1; 0; 0; 0];  % X0
 Pi = zeros(4);      % init cov matrix of X0
@@ -34,7 +33,7 @@ Pi = zeros(4);      % init cov matrix of X0
 % Kalman filtering
 for i = 1:FrameLen-1
     % compute observation Zi
-    Mi = M_cummulative{i};
+    Mi = M_motion{i};
     Si = sqrt(Mi(1,1)^2 + Mi(2,1)^2);
     thetai = asin(Mi(2,1)/Si);
     Txi = Mi(1,3);
@@ -62,4 +61,5 @@ for i = 1:FrameLen-1
                        0,       0,      1];
 end
 
+M_smooth = M_smooth(2:end);
 end
