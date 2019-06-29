@@ -18,7 +18,6 @@ end
 M_motion = motionEstimator(feature_i,feature_p);
 M_smooth = smooth_Kalman(M_motion);
 % M_smooth = smooth_particle(M_motion, n);
-% LPF
 
 %% 接下来对原来视频中每帧进行处理，将其每个点的坐标扩展后(x,y,1)左乘M_smooth^(-1)，得到(x',y',1)
 % localvideo=video{1:100};
