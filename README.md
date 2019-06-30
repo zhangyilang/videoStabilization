@@ -26,11 +26,13 @@ github: https://github.com/zhangyilang/videoStabilization (please download chrom
 
 ### 整体框架
 
-整个视频稳像分为以下五个阶段：
+整个视频稳像分为以下六个阶段：
 
 - 特征提取：提取出每一帧中的特征，为运动估计作准备；
 
   <img src='images/procedure_1.png' style='zoom: 60%'>
+
+- 特征匹配：利用KNN+二叉树来实现特征匹配；
 
 - 运动估计：根据提取到的特征的移动估计出每相邻两帧之间的运动矩阵，包括缩放因子$S$、旋转因子$\theta$和平移向量$(T_x,T_y)$；
 
@@ -193,7 +195,134 @@ $$
 
    
 
+### 特征匹配
+
+选择近似最近邻算法实现特征匹配。其原理为构建一棵二叉树，通过随机挑选两个点，并使用垂直于两个点的等距离超平面将集合划分为两部分，距离定义为欧氏距离。并迭代对每个子集进行进一步划分，使得最终每个子集最多剩余k个点，由此构成一棵完整二叉树。由于在原空间中相邻的点在树结构中也表现出相互靠近的特点，因此在检索时间方面表现为![img](file:///C:/Users/64266/AppData/Local/Temp/msohtmlclip1/01/clip_image002.png),匹配速度非常快。其算法实现通过使用MATLAB函数matchfeature来实现。
+
 ###  运动估计
+
+一般而言，由于活动图像邻近帧中的景物存在着一定的相关性，因此可将活动图像提取出若干特征点，并通过对特征点位移的估计得到相邻帧之间的相对偏移量。运动估计是指通过估计相邻两帧图像间空间位置的相对偏移量实现图像运动的估计。设$P=\left\{ \mathbf{p}_1, \mathbf{p}_2, ...,
+\mathbf{p}_n \right\} , Q=\left\{ \mathbf{q}_1, \mathbf{q}_2, ..., \mathbf{q}_n
+\right\}$是二维空间中的两组特征向量点。在运动估计中，$P$, $Q$分别为相邻两帧之间的特征点向量。运动估计的目标是找出一个刚性的变换矩阵$S$，使得预测点与实际点在所定义的误差函数中误差最小。在不考虑尺度变换的情况下，变换矩阵由旋转$R$与平移$\mathbf{t}$构成。定义目标函数为：
+$$
+\left( R, \mathbf{t} \right) =\underset{R\in SO\left( 2 \right) , t\in \mathbb{R}^2}{arg\min}\sum_{i=1}^n{w_i\lVert \left( R\mathbf{p}_i+\mathbf{t} \right) -\mathbf{q}_i \rVert ^2}
+$$
+其中$w_i>0$为每个特征点的权重。
+
+假设$R$为固定值，设$F\left( \mathbf{t} \right) =\sum_{i=1}^n{w_i\lVert \left( R\mathbf{p}_i+\mathbf{t} \right) -\mathbf{q}_i \rVert ^2}$，则通过求导可得最佳偏移量t。
+$$
+\begin{align}
+0=\frac{\partial F}{\partial \mathbf{t}}&=\sum_{i=1}^n{2w_i\left( R\mathbf{p}_i+\mathbf{t}-\mathbf{q}_i \right)}\\
+&=2\mathbf{t}\left( \sum_{i=1}^n{w_i} \right) +2R\left( \sum_{i=1}^n{w_i\mathbf{p}_i} \right) -2\sum_{i=1}^n{w_i\mathbf{q}_i}
+\end{align}
+$$
+令
+$$
+\overline{\mathbf{p}}=\frac{\sum_{i=1}^n{w_i\mathbf{p}_i}}{\sum_{i=1}^n{w_i}}, \overline{\mathbf{q}}=\frac{\sum_{i=1}^n{w_i\mathbf{q}_i}}{\sum_{i=1}^n{w_i}}
+$$
+则由上式可得，$\mathbf{t}=\overline{\mathbf{q}}-R\overline{\mathbf{p}}$。
+
+现将$\mathbf{t}$的表达式代入$F\left( \mathbf{t} \right)$中，可得
+$$
+\begin{align}
+\sum_{i=1}^n{w_i\lVert \left( R\mathbf{p}_i+\mathbf{t} \right) -\mathbf{q}_i \rVert ^2}&=\sum_{i=1}^n{w_i\lVert \left( R\mathbf{p}_i+\overline{\mathbf{q}}-R\overline{\mathbf{p}} \right) -\mathbf{q}_i \rVert ^2}
+\\
+&=\sum_{i=1}^n{w_i\lVert R\left( \mathbf{p}_i-\overline{\mathbf{p}} \right) -\left( \mathbf{q}_i-\overline{\mathbf{q}} \right) \rVert ^2}
+\end{align}
+$$
+令$\mathbf{x}_i:=\mathbf{p}_i-\overline{\mathbf{p}},
+\mathbf{y}_i:=\mathbf{q}_i-\overline{\mathbf{q}}$，则$R$的最优化目标函数为
+$$
+R=\underset{R\in SO\left( 2 \right)}{arg\min}\sum_{i=1}^n{w_i\lVert R\mathbf{x}_i-\mathbf{y}_i \rVert ^2}
+$$
+对上式进行变换，可得
+$$
+\begin{align}
+\lVert R\mathbf{x}_i-\mathbf{y}_i \rVert ^2&=\left( R\mathbf{x}_i-\mathbf{y}_i \right) ^T\left( R\mathbf{x}_i-\mathbf{y}_i \right) 
+\\
+&=\left( \mathbf{x}_{i}^{T}R^T-\mathbf{y}_{i}^{T} \right) \left( R\mathbf{x}_i-\mathbf{y}_i \right) 
+\\
+&=\mathbf{x}_{i}^{T}R^TR\mathbf{x}_i-\mathbf{y}_{i}^{T}R\mathbf{x}_i-\mathbf{x}_{i}^{T}R^T\mathbf{y}_i+\mathbf{y}_{i}^{T}\mathbf{y}_i
+\\
+&=\mathbf{x}_{i}^{T}\mathbf{x}_i-\mathbf{y}_{i}^{T}R\mathbf{x}_i-\mathbf{x}_{i}^{T}R^T\mathbf{y}_i+\mathbf{y}_{i}^{T}\mathbf{y}_i
+\end{align}
+$$
+上式最后一步利用了旋转矩阵的正交性。由于$\mathbf{x}_{i}^{T}$为$1\times 2$的向量，$R^T$为$2\times 2$向量，$\mathbf{y}_i$为$2\times 1$向量，故可知$\mathbf{x}_{i}^{T}R^T\mathbf{y}_i$为常数。因此，可将其写为
+$$
+\mathbf{x}_{i}^{T}R^T\mathbf{y}_i=\left( \mathbf{x}_{i}^{T}R^T\mathbf{y}_i \right) ^T=\mathbf{y}_{i}^{T}R\mathbf{x}_i
+$$
+于是可得
+$$
+\lVert R\mathbf{x}_i-\mathbf{y}_i \rVert ^2=\mathbf{x}_{i}^{T}\mathbf{x}_i-2\mathbf{y}_{i}^{T}R\mathbf{x}_i+\mathbf{y}_{i}^{T}\mathbf{y}_i
+$$
+因此，目标函数可变换为
+$$
+\begin{align}
+\underset{R\in SO\left( 2 \right)}{arg\min}\sum_{i=1}^n{w_i\lVert R\mathbf{x}_i-\mathbf{y}_i \rVert ^2}&=\underset{R\in SO\left( 2 \right)}{arg\min}\sum_{i=1}^n{w_i\left( \mathbf{x}_{i}^{T}\mathbf{x}_i-2\mathbf{y}_{i}^{T}R\mathbf{x}_i+\mathbf{y}_{i}^{T}\mathbf{y}_i \right)}
+\\
+&=\underset{R\in SO\left( 2 \right)}{arg\min}\left( \sum_{i=1}^n{w_i\mathbf{x}_{i}^{T}\mathbf{x}_i}-2\sum_{i=1}^n{w_i\mathbf{y}_{i}^{T}R\mathbf{x}_i}+\sum_{i=1}^n{w_i\mathbf{y}_{i}^{T}\mathbf{y}_i} \right) 
+\\
+&=\underset{R\in SO\left( 2 \right)}{arg\min}\left(
+-2\sum_{i=1}^n{w_i\mathbf{y}_{i}^{T}R\mathbf{x}_i} \right) 
+\\
+&=\underset{R\in SO\left( 2 \right)}{arg\max}\left( \sum_{i=1}^n{w_i\mathbf{y}_{i}^{T}R\mathbf{x}_i} \right)
+\end{align}
+$$
+设$W=\text{diag}\left( w_1,
+w_2, ..., w_n \right)$为由权重构成的对角阵，$Y=\left[ \mathbf{y}_1, \mathbf{y}_2, ..., \mathbf{y}_n \right]$，$X=\left[ \mathbf{x}_1, \mathbf{x}_2, ...,
+\mathbf{x}_n \right]$，两者均为$2\times n$的矩阵。于是，上式可转换为
+$$
+\sum_{i=1}^n{w_i\mathbf{y}_{i}^{T}R\mathbf{x}_i}=\text{tr}\left( WY^TRX \right)
+$$
+利用迹的性质，有
+$$
+\text{tr}\left( WY^TRX \right) =\text{tr}\left( \left( WY^T \right) \left( RX \right) \right) =\text{tr}\left( RXWY^T \right) 
+$$
+令$S=XWY^T$，则可得$S$为$2\times2$的方阵，对其进行奇异值分解（SVD），得到
+$$
+S=U\varSigma V^T
+$$
+则替换上式可得
+$$
+\text{tr}\left( RXWY^T \right) =\text{tr}\left( RS \right) =\text{tr}\left( RU\varSigma V^T \right) =\text{tr}\left( \varSigma V^TRU \right)
+$$
+由于$V$, $R$, $U$均为正交阵，所以$M=V^TRU=\left[ \mathbf{m}_1, \mathbf{m}_2 \right]$也为正交阵。由正交阵的性质可得，对于$M$的任意列向量$\mathbf{m}_j$，有$\mathbf{m}_{j}^{T}\mathbf{m}_j=1$。因此，
+$$
+1=\mathbf{m}_{j}^{T}\mathbf{m}_j=\sum_{i=1}^2{m_{ij}^{2}}\Rightarrow m_{ij}^{2}\leqslant 1\Rightarrow \left| m_{ij} \right|\leqslant 1
+$$
+而$\varSigma
+=\text{diag}\left( \sigma _1, \sigma _2 \right) $，其中$\sigma _1, \sigma _2\geqslant 0$。于是，有
+$$
+\text{tr}\left( \varSigma M \right) =\left( \begin{matrix}
+	\sigma _1&		\\
+	&		\sigma _2\\
+\end{matrix} \right) \left( \begin{matrix}
+	m_{11}&		m_{12}\\
+	m_{21}&		m_{22}\\
+\end{matrix} \right) =\sum_{i=1}^2{\sigma _im_{ii}}\leqslant \sum_{i=1}^2{\sigma _i}
+$$
+因此，目标函数最大化的情况发生在$m_{ii}=1$时，又由于$M$为正交阵，所以可得$M$为单位阵。因此，
+$$
+I=M=V^TRU\Rightarrow V=RU\Rightarrow R=VU^T
+$$
+根据文献[9]可知，上述求解过程会导致$R$存在映像（reflection），需要经过些微的矫正，由文献[9]可得，矫正后的$R$为
+$$
+R=V\left[ \begin{matrix}{l}
+	1&		&		&		&		\\
+	&		1&		&		&		\\
+	&		&		\ddots&		&		\\
+	&		&		&		1&		\\
+	&		&		&		&		\det \left( VU^T \right)\\
+\end{matrix} \right] U^T
+$$
+综上，在不考虑尺度变换的情况下，变换矩阵为
+$$
+M=\left[ \begin{matrix}
+	R&		\mathbf{t}\\
+	\mathbf{0}&		1\\
+\end{matrix} \right]
+$$
+在程序中，设置$W$为单位阵，于是可以求得相邻帧之间的运动估计$M$。
 
 
 
@@ -311,6 +440,9 @@ observe_std = sqrt([1e-1, 1e-1, 1e-1, 1e-1]);
 
 ### 运动补偿
 
+视频图像的运动由相机扫描运动和随机抖动产生。相机的扫描运动变化平缓，在一定时间内运动方向和赋值具有一致性，属于低频分量，而相机抖动则随意性较强，方向和幅值均不具有规律性，属于高频分量。运动补偿的目的就是要补偿相机的随机抖动，保留平滑的扫描运动。运动补偿主要考虑的问题是参考帧的选择问题。本文选用相邻帧补偿的方式实现运动补偿。该方法在相邻两帧图像之间进行运动估计，并将帧间运动矢量进行累积，得到绝对运动矢量，以绝对运动矢量作为补偿参数。由于相邻帧图像重叠度较大，故全局运动估计的精度较高。但是这种方法也会存在缺陷，因为当前帧的补偿参数是通过运动矢量累积得到，故误差会逐步积累。如果在稳像前发生错误，则错误会向后续传播，导致补偿后的视频序列发生偏移，最终导致失稳现象。
+本文中，对于不同特点的视频，选用了变换矩阵的不同部分对图像进行补偿，以期得到效果明显且更简单的补偿。
+
 
 
 ### 代码优化
@@ -338,6 +470,18 @@ single instruction multiple data单指令多数据流。
 
 
 
+### 结论
+
+Result文件中存放了C++程序运行后的结果视频，从中可以看出图像的稳定性有了一定的提高。其中以平移为主的视频其稳定效果最好，以尺度变换为主的视频稳定效果不是很理想（C++效果较好，matlab代码效果不如C++，可自行尝试运行，需要MATLAB vision库）。其原因分析如下：
+
+- 从特征检测的角度考虑，所选用的视频（如input_02.avi）不适合使用角点检测的方法提取特征，像大海的视频中真正的角点特别少，检测出的特征很多都可能是噪声，因此造成后级一系列操作的误差，从而导致稳定效果不明显。
+- 因此对存在尺度变换的视频，其运动估计一定存在较大的偏差。
+- 从运动补偿的角度考虑，采用的是初步的将平移因素考虑进去，并没有考虑旋转的因素，因此，对于图像旋转和尺度变换的问题均无法得到补偿，也会导致稳定效果的不明显。
+
+综上，可得需要通过调节上述环节来加以改进，所以此次所实现的程序对所选用的视频有一定的局限性。
+
+
+
 ### 参考文献
 
 [1] J. Shi and C. Tomasi, Good Features to Track, Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp 593-600, June 1994.
@@ -355,3 +499,5 @@ single instruction multiple data单指令多数据流。
 [7] Hee Park S, Levoy M. Gyro-based multi-image deconvolution for removing handshake blur[C]//Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2014: 3366-3373.
 
 [8] hjl240. Video Stabilization. https://blog.csdn.net/hjl240/article/details/52683738.
+
+[9] Sorkine, O., & Rabinovich, M. (2009). Least-squares rigid motion using svd. Technical Notes, (February), 1–6. Retrieved from http://www.igl.ethz.ch/projects/ARAP/svd_rot.pdf.
